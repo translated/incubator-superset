@@ -26,6 +26,17 @@ elif [ "$SUPERSET_ENV" = "development" ]; then
     (cd superset/assets/ && npm run dev) &
     FLASK_ENV=development FLASK_APP=superset:app flask run -p 8088 --with-threads --reload --debugger --host=0.0.0.0
 elif [ "$SUPERSET_ENV" = "production" ]; then
+	bash /wait-for-it.sh $REDIS_HOST:$REDIS_PORT
+	if [ $? -ne 0 ]; then
+		echo "$REDIS_HOST:$REDIS_PORT unaivalable"
+		exit 1
+	fi
+	bash /wait-for-it.sh $POSTGRES_HOST:$POSTGRES_PORT
+	if [ $? -ne 0 ]; then
+		echo "$POSTGRES_HOST:$POSTGRES_PORT unaivalable"
+		exit 1
+	fi	
+
     celery worker --app=superset.sql_lab:celery_app --pool=gevent -Ofair &
     gunicorn --bind  0.0.0.0:8088 \
         --workers $((2 * $(getconf _NPROCESSORS_ONLN) + 1)) \
