@@ -15,3 +15,10 @@
 # limitations under the License.
 #
 gevent==1.4.0
+
+# Db source
+mysqlclient
+PyAthena>1.2.0
+pybigquery
+gsheetsdb
+psycopg2
