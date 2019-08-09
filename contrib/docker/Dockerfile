@@ -71,6 +71,6 @@ COPY contrib/docker/wait-for-it.sh /wait-for-it.sh
 COPY contrib/docker/superset_config.py /home/superset/superset/superset_config.py
 ENTRYPOINT ["/entrypoint.sh"]
 
-HEALTHCHECK CMD ["curl", "-f", "http://localhost:8088/health"]
+HEALTHCHECK CMD --start-period=30s ["curl", "-f", "http://localhost:8088/health"]
 
 EXPOSE 8088
