@@ -1,0 +1,76 @@
+version: '3.4'
+services:
+  redis:
+    image: redis:3.2
+    networks:
+      - superset_network      
+    volumes:
+      - redis:/data
+    deploy:   
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.hostname == vm-swarm01]
+      restart_policy:
+        condition: on-failure
+        max_attempts: 1      
+
+  postgres:
+    image: postgres:10
+    environment:
+      POSTGRES_DB: superset
+      POSTGRES_PASSWORD: superset
+      POSTGRES_USER: superset
+    networks:
+      - superset_network      
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    deploy:   
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.hostname == vm-swarm02]
+      restart_policy:
+        condition: on-failure
+        max_attempts: 1
+
+  superset:
+    image: translatednet/superset
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: superset
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: superset
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SUPERSET_ENV: production
+    user: root:root
+    networks:
+      - superset_network
+      - traefik    
+    deploy:
+      mode: replicated
+      replicas: 1    
+      labels:
+        traefik.docker.network: traefik
+        traefik.enable: 'true'
+        traefik.frontend.rule: Host:superset-test.translated.home
+        traefik.port: '8088'
+      restart_policy:
+        condition: on-failure
+        max_attempts: 10
+        delay: 10s
+        window: 10s
+
+volumes:
+  postgres:
+  redis:
+
+networks:
+  superset_network:
+    driver: overlay
+  traefik:
+    driver: overlay
+    external: true
